@@ -81,7 +81,7 @@ public class UtilisateurUI {
         frame.setLocationRelativeTo(null);
         frame.setLayout(new BorderLayout());
 
-        String[] columnNames = {"ID", "Nom d'utilisateur", "Email", "Mot de passe", "Nom", "Prénom"};
+        String[] columnNames = {"ID", "Nom d'utilisateur", "Email", "Nom", "Prénom"};
         DefaultTableModel tableModel = new DefaultTableModel(columnNames, 0);
         JTable table = new JTable(tableModel);
         table.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
@@ -94,7 +94,6 @@ public class UtilisateurUI {
                         utilisateur.getIdUtilisateur(),
                         utilisateur.getNomUtilisateur(),
                         utilisateur.getEmail(),
-                        utilisateur.getPassword(),
                         utilisateur.getNom(),
                         utilisateur.getPrenom()
                 };
@@ -116,15 +115,13 @@ public class UtilisateurUI {
             int id = (int) tableModel.getValueAt(selectedRow, 0);
             String nomUtilisateur = (String) tableModel.getValueAt(selectedRow, 1);
             String email = (String) tableModel.getValueAt(selectedRow, 2);
-            String password = (String) tableModel.getValueAt(selectedRow, 3);
-            String nom = (String) tableModel.getValueAt(selectedRow, 4);
-            String prenom = (String) tableModel.getValueAt(selectedRow, 5);
+            String nom = (String) tableModel.getValueAt(selectedRow, 3);
+            String prenom = (String) tableModel.getValueAt(selectedRow, 4);
 
             Utilisateur utilisateur = new Utilisateur();
             utilisateur.setIdUtilisateur(id);
             utilisateur.setNomUtilisateur(nomUtilisateur);
             utilisateur.setEmail(email);
-            utilisateur.setPassword(password);
             utilisateur.setNom(nom);
             utilisateur.setPrenom(prenom);
 
@@ -219,30 +216,46 @@ public class UtilisateurUI {
             @Override
             public void actionPerformed(ActionEvent e) {
                 // Récupérer les données des champs
-                String nomUtilisateur = nomUtilisateurField.getText();
-                String email = emailField.getText();
-                String password = passwordField.getText();
-                String nom = nomField.getText();
-                String prenom = prenomField.getText();
+                String nomUtilisateur = nomUtilisateurField.getText().trim();
+                String email = emailField.getText().trim();
+                String password = passwordField.getText().trim();
+                String nom = nomField.getText().trim();
+                String prenom = prenomField.getText().trim();
 
-                // Créer un objet Utilisateur
-                Utilisateur utilisateur = new Utilisateur();
-                utilisateur.setNomUtilisateur(nomUtilisateur);
-                utilisateur.setEmail(email);
-                utilisateur.setPassword(password);
-                utilisateur.setNom(nom);
-                utilisateur.setPrenom(prenom);
+                // Vérifier si tous les champs sont remplis
+                if (nomUtilisateur.isEmpty() || email.isEmpty() || password.isEmpty() || nom.isEmpty() || prenom.isEmpty()) {
+                    JOptionPane.showMessageDialog(frame, "Tous les champs doivent être remplis.", "Erreur", JOptionPane.ERROR_MESSAGE);}
+
+                else if (nomUtilisateur.contains(" ")) {
+                    JOptionPane.showMessageDialog(frame, "Le nom d'utilisateur ne doit pas contenir d'espaces.", "Erreur", JOptionPane.ERROR_MESSAGE);}
+
+                else if (!email.matches("^[\\w.-]+@[\\w.-]+\\.[a-zA-Z]{2,}$")){
+                    JOptionPane.showMessageDialog(frame, "Format email invalide", "Erreur", JOptionPane.ERROR_MESSAGE);}
+
+                else if (!password.matches("^(?=.*[A-Z])(?=.*\\d).{8,}$")){
+                    JOptionPane.showMessageDialog(frame, "Format mot de passe incorrecte", "Erreur", JOptionPane.ERROR_MESSAGE);}
+                else {
+
+
+                    // Créer un objet Utilisateur
+                    Utilisateur utilisateur = new Utilisateur();
+                    utilisateur.setNomUtilisateur(nomUtilisateur);
+                    utilisateur.setEmail(email);
+                    utilisateur.setPassword(password);
+                    utilisateur.setNom(nom);
+                    utilisateur.setPrenom(prenom);
+
+
 
                 // Appeler la méthode du service pour ajouter l'utilisateur à la base de données
                 try {
                     utilisateurService.insertUtilisateur(utilisateur);
                     JOptionPane.showMessageDialog(frame, "Utilisateur créé avec succès !");
+                    frame.dispose();  // Fermer le formulaire après création
                 } catch (InterruptedException | IOException ex) {
                     JOptionPane.showMessageDialog(frame, "Erreur lors de la création de l'utilisateur : " + ex.getMessage());
                 }
-
-                frame.dispose();  // Fermer le formulaire après création
-            }
+            }}
         });
 
         frame.add(panel);
