@@ -7,12 +7,10 @@ import java.util.UUID;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.slf4j.event.Level;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 
-import edu.ezip.commons.LoggingUtils;
 import edu.ezip.ing1.pds.business.dto.Utilisateur;
 import edu.ezip.ing1.pds.business.dto.Utilisateurs;
 import edu.ezip.ing1.pds.client.commons.ClientRequest;
@@ -32,6 +30,7 @@ public class UtilisateurService {
     final String selectRequestOrder = "SELECT_ALL_UTILISATEURS";
     final String updateRequestOrder = "UPDATE_UTILISATEUR";
     final String deleteRequestOrder = "DELETE_UTILISATEUR";
+    final String selectByEmailRequestOrder = "SELECT_UTILISATEUR_BY_EMAIL";
 
     private final NetworkConfig networkConfig;
 
@@ -40,35 +39,37 @@ public class UtilisateurService {
     }
 
     /**
-     * Insère un utilisateur dans la base de données.
+     * Insère un utilisateur
      */
-    public void insertUtilisateur(Utilisateur utilisateur) throws InterruptedException, IOException {
-        processUtilisateur(utilisateur, insertRequestOrder);
+    public String insertUtilisateur(Utilisateur utilisateur) throws InterruptedException, IOException {
+        if (checkEmailExists(utilisateur.getEmail())) {
+            return "Email déjà utilisé";
+        }
+        return processUtilisateur(utilisateur, insertRequestOrder);
     }
 
     /**
-     *Modifier un utilisateur et le changer de la base de donnes.
+     * Met à jour un utilisateur.
      */
     public void updateUtilisateur(Utilisateur utilisateur) throws InterruptedException, IOException {
         processUtilisateur(utilisateur, updateRequestOrder);
     }
 
     /**
-     *SUPPRIMER un utilisateur.
+     * Supprime un utilisateur.
      */
     public void deleteUtilisateur(Utilisateur utilisateur) throws InterruptedException, IOException {
         processUtilisateur(utilisateur, deleteRequestOrder);
     }
 
-
     /**
-     * Fonction générique pour traiter un utilisateur en fonction d'une requête spécifique.
+     * Méthode générique qui traite une requête d'insertion, de modification ou de suppression.
      */
-    private void processUtilisateur(Utilisateur utilisateur, String requestOrder) throws InterruptedException, IOException {
+    private String processUtilisateur(Utilisateur utilisateur, String requestOrder) throws InterruptedException, IOException {
         final Deque<ClientRequest> utilisateurRequests = new ArrayDeque<>();
-
         final ObjectMapper objectMapper = new ObjectMapper();
         final String jsonifiedUtilisateur = objectMapper.writerWithDefaultPrettyPrinter().writeValueAsString(utilisateur);
+
         logger.trace("Utilisateur en JSON : {}", jsonifiedUtilisateur);
 
         final String requestId = UUID.randomUUID().toString();
@@ -80,7 +81,7 @@ public class UtilisateurService {
         final byte[] requestBytes = objectMapper.writerWithDefaultPrettyPrinter().writeValueAsBytes(request);
 
         ClientRequest utilisateurRequest;
-
+        // requetes
         if ("INSERT_UTILISATEUR".equals(requestOrder)) {
             utilisateurRequest = new InsertUtilisateursClientRequest(networkConfig, 0, request, utilisateur, requestBytes);
         } else if ("UPDATE_UTILISATEUR".equals(requestOrder)) {
@@ -91,23 +92,28 @@ public class UtilisateurService {
             throw new IllegalArgumentException("Requête non supportée : " + requestOrder);
         }
 
-
         utilisateurRequests.push(utilisateurRequest);
 
         while (!utilisateurRequests.isEmpty()) {
             final ClientRequest processedRequest = utilisateurRequests.pop();
             processedRequest.join();
+
             final Utilisateur processedUtilisateur = (Utilisateur) processedRequest.getInfo();
             logger.debug("Thread {} terminé : {} {} {}  --> {}",
                     processedRequest.getThreadName(),
                     processedUtilisateur.getNom(), processedUtilisateur.getPrenom(), processedUtilisateur.getEmail(),
                     processedRequest.getResult());
+
+            if ("INSERT_UTILISATEUR".equals(requestOrder)) {
+                return (String) processedRequest.getResult();
+            }
         }
+
+        return "OK"; // Si update ou delete
     }
 
-
     /**
-     * Récupère la liste des utilisateurs de la base de données.
+     * Récupère tous les utilisateurs.
      */
     public Utilisateurs selectUtilisateurs() throws InterruptedException, IOException {
         final Deque<ClientRequest> utilisateurRequests = new ArrayDeque<>();
@@ -126,15 +132,10 @@ public class UtilisateurService {
                 networkConfig, 0, request, null, requestBytes);
         utilisateurRequests.push(utilisateurRequest);
 
-        logger.debug("Taille de utilisateurRequests : {}", utilisateurRequests.size());
-
         if (!utilisateurRequests.isEmpty()) {
             final ClientRequest joinedUtilisateurRequest = utilisateurRequests.pop();
             joinedUtilisateurRequest.join();
-            logger.debug(" Thread {} terminé.", joinedUtilisateurRequest.getThreadName());
-
             Object result = joinedUtilisateurRequest.getResult();
-            logger.debug(" Résultat de getResult() : {}", result);
 
             if (result instanceof Utilisateurs) {
                 Utilisateurs utilisateurs = (Utilisateurs) result;
@@ -150,5 +151,40 @@ public class UtilisateurService {
         }
     }
 
-}
+    /**
+     * Vérifie si un email existe déjà en base.
+     */
+    public boolean checkEmailExists(String email) throws InterruptedException, IOException {
+        final Deque<ClientRequest> utilisateurRequests = new ArrayDeque<>();
+        final ObjectMapper objectMapper = new ObjectMapper();
 
+        Utilisateur utilisateur = new Utilisateur();
+        utilisateur.setEmail(email);
+
+        final String jsonifiedUtilisateur = objectMapper.writerWithDefaultPrettyPrinter().writeValueAsString(utilisateur);
+
+        final String requestId = UUID.randomUUID().toString();
+        final Request request = new Request();
+        request.setRequestId(requestId);
+        request.setRequestOrder(selectByEmailRequestOrder);
+        request.setRequestContent(jsonifiedUtilisateur);
+        objectMapper.enable(SerializationFeature.WRAP_ROOT_VALUE);
+        final byte[] requestBytes = objectMapper.writerWithDefaultPrettyPrinter().writeValueAsBytes(request);
+
+        final SelectAllUtilisateursClientRequest utilisateurRequest = new SelectAllUtilisateursClientRequest(
+                networkConfig, 0, request, utilisateur, requestBytes);
+        utilisateurRequests.push(utilisateurRequest);
+
+        if (!utilisateurRequests.isEmpty()) {
+            final ClientRequest joinedUtilisateurRequest = utilisateurRequests.pop();
+            joinedUtilisateurRequest.join();
+            Object result = joinedUtilisateurRequest.getResult();
+
+            if (result instanceof Utilisateurs) {
+                Utilisateurs utilisateurs = (Utilisateurs) result;
+                return !utilisateurs.getUtilisateurs().isEmpty();
+            }
+        }
+        return false;
+    }
+}

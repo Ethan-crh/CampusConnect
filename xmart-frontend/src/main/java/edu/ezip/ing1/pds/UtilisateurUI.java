@@ -248,14 +248,18 @@ public class UtilisateurUI {
 
 
                 // Appeler la méthode du service pour ajouter l'utilisateur à la base de données
-                try {
-                    utilisateurService.insertUtilisateur(utilisateur);
-                    JOptionPane.showMessageDialog(frame, "Utilisateur créé avec succès !");
-                    frame.dispose();  // Fermer le formulaire après création
-                } catch (InterruptedException | IOException ex) {
-                    JOptionPane.showMessageDialog(frame, "Erreur lors de la création de l'utilisateur : " + ex.getMessage());
-                }
-            }}
+                    try {
+                        String response = utilisateurService.insertUtilisateur(utilisateur);
+                        if ("Email déjà utilisé".equals(response)) {
+                            JOptionPane.showMessageDialog(frame, "Cet email est déjà utilisé.", "Erreur", JOptionPane.ERROR_MESSAGE);
+                        } else {
+                            JOptionPane.showMessageDialog(frame, "Utilisateur créé avec succès !");
+                            frame.dispose();
+                        }
+                    } catch (InterruptedException | IOException ex) {
+                        JOptionPane.showMessageDialog(frame, "Erreur lors de la création de l'utilisateur : " + ex.getMessage());
+                    }
+                }}
         });
 
         frame.add(panel);

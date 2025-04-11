@@ -34,6 +34,8 @@ public class XMartCityService {
         INSERT_UTILISATEUR("INSERT INTO Utilisateur (nom_utilisateur, nom, prenom, email, password) VALUES (?, ?, ?, ?, ?)"),
         UPDATE_UTILISATEUR("UPDATE Utilisateur SET nom_utilisateur = ?, nom = ?, prenom = ?, email = ?, password = ? WHERE id_utilisateur = ?"),
         DELETE_UTILISATEUR("DELETE FROM Utilisateur WHERE id_utilisateur = ?"),
+        SELECT_UTILISATEUR_BY_EMAIL("SELECT * FROM Utilisateur WHERE email = ?"),
+
         SELECT_ALL_CAPTEURS("SELECT * FROM Capteurs "),
         INSERT_CAPTEUR("INSERT INTO Capteurs (id_capteur , statut, presence , detection_probleme) VALUES (?, ?, ?, ?)"),
         UPDATE_CAPTEUR("UPDATE Capteurs SET statut = ?, presence = ?, detection_probleme = ? WHERE id_capteur = ?"),
@@ -90,6 +92,9 @@ public class XMartCityService {
 
             case SELECT_ALL_UTILISATEURS:
                 response = selectAllUtilisateurs(request, connection);
+                break;
+            case SELECT_UTILISATEUR_BY_EMAIL:
+                response = selectConectionCondition(request, connection);
                 break;
             case INSERT_UTILISATEUR:
                 response = insertUtilisateur(request, connection);
@@ -196,7 +201,6 @@ public class XMartCityService {
     private Response insertUtilisateur(final Request request, final Connection connection) throws SQLException, IOException {
         final ObjectMapper objectMapper = new ObjectMapper();
         final Utilisateur utilisateur = objectMapper.readValue(request.getRequestBody(), Utilisateur.class);
-
         final PreparedStatement stmt = connection.prepareStatement(Queries.INSERT_UTILISATEUR.query);
         stmt.setString(1, utilisateur.getNomUtilisateur());
         stmt.setString(2, utilisateur.getNom());
@@ -205,11 +209,6 @@ public class XMartCityService {
         stmt.setString(5, utilisateur.getPassword());
         stmt.executeUpdate();
 
-        /*final Statement stmt2 = connection.createStatement();
-        final ResultSet res = stmt2.executeQuery("SELECT LAST_INSERT_ID()");
-        res.next();
-
-        utilisateur.setIdUtilisateur(res.getInt(1));*/
 
         return new Response(request.getRequestId(), objectMapper.writeValueAsString(utilisateur));
     }
@@ -299,14 +298,8 @@ public class XMartCityService {
             utilisateur.setIdUtilisateur(res.getInt(1));
             utilisateur.setNomUtilisateur(res.getString(2));
             utilisateur.setEmail(res.getString(3));
-            utilisateur.setPassword(res.getString(4));
-            utilisateur.setDateCreation(res.getDate(5));
             utilisateur.setNom(res.getString(6));
             utilisateur.setPrenom(res.getString(7));
-            utilisateur.setAge(res.getInt(8));
-            utilisateur.setDateDeNaissance(res.getDate(9));
-            utilisateur.setSexe(res.getString(10));
-
 
             utilisateurs.add(utilisateur);
         }
@@ -314,6 +307,35 @@ public class XMartCityService {
         if (utilisateurs.getUtilisateurs().isEmpty()) {
             return new Response(request.getRequestId(), "Aucun patient trouvé");
         }
+        return new Response(request.getRequestId(), objectMapper.writeValueAsString(utilisateurs));
+    }
+
+        public Response  selectConectionCondition (Request request, Connection connection) throws IOException, SQLException {
+        final ObjectMapper objectMapper = new ObjectMapper();
+
+        String email;
+
+        Utilisateur utilisateur= objectMapper.readValue(request.getRequestBody(), Utilisateur.class);
+        email = utilisateur.getEmail();
+
+        final PreparedStatement stmt = connection.prepareStatement(Queries.SELECT_UTILISATEUR_BY_EMAIL.query);
+        stmt.setString(1, email);
+
+
+        ResultSet res = stmt.executeQuery();
+
+        Utilisateurs utilisateurs = new Utilisateurs();
+        while (res.next()) {
+            Utilisateur et = new Utilisateur();
+
+            et.setEmail(res.getString("email"));
+
+            utilisateurs.add(et);
+        }
+
+        res.close();
+        stmt.close();
+
         return new Response(request.getRequestId(), objectMapper.writeValueAsString(utilisateurs));
     }
 
