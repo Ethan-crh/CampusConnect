@@ -273,17 +273,23 @@ public class CapteurUI {
         idField.setEditable(false);
         panel.add(idField);
 
-        panel.add(new JLabel("Statut (Actif/ Inactif) :"));
-        JTextField statutField = new JTextField(capteur.getStatut() ? "Actif" : "Inactif");
-        panel.add(statutField);
+        // Statut ComboBox
+        panel.add(new JLabel("Statut (Actif/Inactif) :"));
+        JComboBox<String> statutComboBox = new JComboBox<>(new String[]{"Actif", "Inactif"});
+        statutComboBox.setSelectedItem(capteur.getStatut() ? "Actif" : "Inactif");
+        panel.add(statutComboBox);
 
-        panel.add(new JLabel("Présence (Oui/ Non) :"));
-        JTextField presenceField = new JTextField(capteur.getPresence() ? "Oui" : "Non");
-        panel.add(presenceField);
+        // Présence ComboBox
+        panel.add(new JLabel("Présence (Oui/Non) :"));
+        JComboBox<String> presenceComboBox = new JComboBox<>(new String[]{"Oui", "Non"});
+        presenceComboBox.setSelectedItem(capteur.getPresence() ? "Oui" : "Non");
+        panel.add(presenceComboBox);
 
-        panel.add(new JLabel("Problème détecté (Oui/ Non) :"));
-        JTextField detectionField = new JTextField(capteur.getDetectionProbleme() ? "Oui" : "Non");
-        panel.add(detectionField);
+        // Détection problème ComboBox
+        panel.add(new JLabel("Problème détecté (Oui/Non) :"));
+        JComboBox<String> detectionComboBox = new JComboBox<>(new String[]{"Oui", "Non"});
+        detectionComboBox.setSelectedItem(capteur.getDetectionProbleme() ? "Oui" : "Non");
+        panel.add(detectionComboBox);
 
         JButton updateButton = new JButton("Modifier");
         updateButton.setPreferredSize(new Dimension(120, 40));
@@ -291,9 +297,9 @@ public class CapteurUI {
 
         updateButton.addActionListener(e -> {
             try {
-                String statut = statutField.getText();
-                String presence = presenceField.getText();
-                String detection = detectionField.getText();
+                String statut = (String) statutComboBox.getSelectedItem();
+                String presence = (String) presenceComboBox.getSelectedItem();
+                String detection = (String) detectionComboBox.getSelectedItem();
 
                 // Mise à jour du capteur
                 capteur.setStatut("Actif".equals(statut));
@@ -316,5 +322,4 @@ public class CapteurUI {
 
         frame.add(panel);
         frame.setVisible(true);
-    }
-}
+    }}
