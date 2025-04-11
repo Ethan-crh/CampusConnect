@@ -31,6 +31,7 @@ public class UtilisateurService {
     final String updateRequestOrder = "UPDATE_UTILISATEUR";
     final String deleteRequestOrder = "DELETE_UTILISATEUR";
     final String selectByEmailRequestOrder = "SELECT_UTILISATEUR_BY_EMAIL";
+    final String selectByEmailPasswordRequestOrder = "SELECT_UTILISATEUR_BY_EMAIL_PASSWORD";
 
     private final NetworkConfig networkConfig;
 
@@ -187,4 +188,41 @@ public class UtilisateurService {
         }
         return false;
     }
+
+    public boolean checkConnexion(String email, String password) throws InterruptedException, IOException {
+        final Deque<ClientRequest> utilisateurRequests = new ArrayDeque<>();
+        final ObjectMapper objectMapper = new ObjectMapper();
+
+        Utilisateur utilisateur = new Utilisateur();
+        utilisateur.setEmail(email);
+        utilisateur.setPassword(password);
+
+        final String jsonifiedUtilisateur = objectMapper.writerWithDefaultPrettyPrinter().writeValueAsString(utilisateur);
+
+        final String requestId = UUID.randomUUID().toString();
+        final Request request = new Request();
+        request.setRequestId(requestId);
+        request.setRequestOrder(selectByEmailPasswordRequestOrder);
+        request.setRequestContent(jsonifiedUtilisateur);
+        objectMapper.enable(SerializationFeature.WRAP_ROOT_VALUE);
+        final byte[] requestBytes = objectMapper.writerWithDefaultPrettyPrinter().writeValueAsBytes(request);
+
+        final SelectAllUtilisateursClientRequest utilisateurRequest = new SelectAllUtilisateursClientRequest(
+                networkConfig, 0, request, utilisateur, requestBytes);
+        utilisateurRequests.push(utilisateurRequest);
+
+        if (!utilisateurRequests.isEmpty()) {
+            final ClientRequest joinedUtilisateurRequest = utilisateurRequests.pop();
+            joinedUtilisateurRequest.join();
+            Object result = joinedUtilisateurRequest.getResult();
+
+            if (result instanceof Utilisateurs) {
+                Utilisateurs utilisateurs = (Utilisateurs) result;
+                return !utilisateurs.getUtilisateurs().isEmpty();
+            }
+        }
+
+        return false;
+    }
+
 }

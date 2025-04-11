@@ -35,6 +35,7 @@ public class XMartCityService {
         UPDATE_UTILISATEUR("UPDATE Utilisateur SET nom_utilisateur = ?, nom = ?, prenom = ?, email = ?, password = ? WHERE id_utilisateur = ?"),
         DELETE_UTILISATEUR("DELETE FROM Utilisateur WHERE id_utilisateur = ?"),
         SELECT_UTILISATEUR_BY_EMAIL("SELECT * FROM Utilisateur WHERE email = ?"),
+        SELECT_UTILISATEUR_BY_EMAIL_PASSWORD("SELECT * FROM Utilisateur WHERE email = ? AND password = ?"),
 
         SELECT_ALL_CAPTEURS("SELECT * FROM Capteurs "),
         INSERT_CAPTEUR("INSERT INTO Capteurs (id_capteur , statut, presence , detection_probleme) VALUES (?, ?, ?, ?)"),
@@ -95,6 +96,9 @@ public class XMartCityService {
                 break;
             case SELECT_UTILISATEUR_BY_EMAIL:
                 response = selectConectionCondition(request, connection);
+                break;
+            case SELECT_UTILISATEUR_BY_EMAIL_PASSWORD:
+                response = checkConnexionUtilisateur(request, connection);
                 break;
             case INSERT_UTILISATEUR:
                 response = insertUtilisateur(request, connection);
@@ -331,6 +335,31 @@ public class XMartCityService {
             et.setEmail(res.getString("email"));
 
             utilisateurs.add(et);
+        }
+
+        res.close();
+        stmt.close();
+
+        return new Response(request.getRequestId(), objectMapper.writeValueAsString(utilisateurs));
+    }
+
+    private Response checkConnexionUtilisateur(final Request request, final Connection connection) throws SQLException, IOException {
+        final ObjectMapper objectMapper = new ObjectMapper();
+        final Utilisateur utilisateur = objectMapper.readValue(request.getRequestBody(), Utilisateur.class);
+
+        final PreparedStatement stmt = connection.prepareStatement(Queries.SELECT_UTILISATEUR_BY_EMAIL_PASSWORD.query);
+        stmt.setString(1, utilisateur.getEmail());
+        stmt.setString(2, utilisateur.getPassword());
+
+        ResultSet res = stmt.executeQuery();
+        Utilisateurs utilisateurs = new Utilisateurs();
+
+        while (res.next()) {
+            Utilisateur u = new Utilisateur();
+            u.setIdUtilisateur(res.getInt("id_utilisateur"));
+            u.setNomUtilisateur(res.getString("nom_utilisateur"));
+            u.setEmail(res.getString("email"));
+            utilisateurs.add(u);
         }
 
         res.close();
