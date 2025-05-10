@@ -28,7 +28,7 @@
                 <configuration>
                     <archive>
                         <manifest>
-                            <mainClass>edu.ezip.ing1.pds.MainFrontEnd</mainClass>
+                            <mainClass>edu.ezip.ing1.pds.AccueilUI</mainClass>
                         </manifest>
                     </archive>
                     <descriptorRefs>
@@ -56,6 +56,12 @@
             <groupId>ch.qos.logback</groupId>
             <artifactId>logback-classic</artifactId>
             <version>1.1.7</version>
+        </dependency>
+
+        <dependency>
+            <groupId>com.formdev</groupId>
+            <artifactId>flatlaf</artifactId>
+            <version>3.2</version>
         </dependency>
 
         <dependency>
