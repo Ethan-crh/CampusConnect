@@ -32,7 +32,7 @@ public class ReservationUI {
         // Créer la fenêtre principale avec deux boutons
         JFrame frame = new JFrame("Gestion des Réservations");
         frame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
-        frame.setSize(800, 600);
+        frame.setSize(900, 551);
         frame.setLocationRelativeTo(null);
 
         // Créer un panel avec un layout vertical
@@ -85,7 +85,7 @@ public class ReservationUI {
 
         JFrame frame = new JFrame("Liste des Réservations");
         frame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
-        frame.setSize(800, 400);
+        frame.setSize(900, 550);
         frame.setLocationRelativeTo(null);
         frame.setLayout(new BorderLayout());
 
@@ -197,7 +197,7 @@ public class ReservationUI {
     private void afficherFormulaireCreation() {
         JFrame frame = new JFrame("Créer une Réservation");
         frame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
-        frame.setSize(800, 400);
+        frame.setSize(900, 550);
         frame.setLocationRelativeTo(null);
         frame.setLayout(new BorderLayout());
         frame.setVisible(true);
@@ -319,7 +319,7 @@ public class ReservationUI {
     private void afficherFormulaireModification(Reservation reservation, DefaultTableModel tableModel, int selectedRow) {
         JFrame frame = new JFrame("Modifier une Réservation");
         frame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
-        frame.setSize(400, 300);
+        frame.setSize(900, 550);
         frame.setLocationRelativeTo(null);
 
         JPanel panel = new JPanel(new GridLayout(8, 2, 10, 10));
