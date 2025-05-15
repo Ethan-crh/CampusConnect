@@ -32,6 +32,7 @@ public class UtilisateurService {
     final String deleteRequestOrder = "DELETE_UTILISATEUR";
     final String selectByEmailRequestOrder = "SELECT_UTILISATEUR_BY_EMAIL";
     final String selectByEmailPasswordRequestOrder = "SELECT_UTILISATEUR_BY_EMAIL_PASSWORD";
+    final String selectByNomUtilisateurRequestOrder = "SELECT_UTILISATEUR_BY_NOM_UTILISATEUR";
 
     private final NetworkConfig networkConfig;
 
@@ -39,9 +40,6 @@ public class UtilisateurService {
         this.networkConfig = networkConfig;
     }
 
-    /**
-     * Insère un utilisateur
-     */
     public String insertUtilisateur(Utilisateur utilisateur) throws InterruptedException, IOException {
         if (checkEmailExists(utilisateur.getEmail())) {
             return "Email déjà utilisé";
@@ -49,23 +47,14 @@ public class UtilisateurService {
         return processUtilisateur(utilisateur, insertRequestOrder);
     }
 
-    /**
-     * Met à jour un utilisateur.
-     */
     public void updateUtilisateur(Utilisateur utilisateur) throws InterruptedException, IOException {
         processUtilisateur(utilisateur, updateRequestOrder);
     }
 
-    /**
-     * Supprime un utilisateur.
-     */
     public void deleteUtilisateur(Utilisateur utilisateur) throws InterruptedException, IOException {
         processUtilisateur(utilisateur, deleteRequestOrder);
     }
 
-    /**
-     * Méthode générique qui traite une requête d'insertion, de modification ou de suppression.
-     */
     private String processUtilisateur(Utilisateur utilisateur, String requestOrder) throws InterruptedException, IOException {
         final Deque<ClientRequest> utilisateurRequests = new ArrayDeque<>();
         final ObjectMapper objectMapper = new ObjectMapper();
@@ -82,12 +71,11 @@ public class UtilisateurService {
         final byte[] requestBytes = objectMapper.writerWithDefaultPrettyPrinter().writeValueAsBytes(request);
 
         ClientRequest utilisateurRequest;
-        // requetes
-        if ("INSERT_UTILISATEUR".equals(requestOrder)) {
+        if (insertRequestOrder.equals(requestOrder)) {
             utilisateurRequest = new InsertUtilisateursClientRequest(networkConfig, 0, request, utilisateur, requestBytes);
-        } else if ("UPDATE_UTILISATEUR".equals(requestOrder)) {
+        } else if (updateRequestOrder.equals(requestOrder)) {
             utilisateurRequest = new UpdateUtilisateursClientRequest(networkConfig, 0, request, utilisateur, requestBytes);
-        } else if ("DELETE_UTILISATEUR".equals(requestOrder)) {
+        } else if (deleteRequestOrder.equals(requestOrder)) {
             utilisateurRequest = new DeleteUtilisateursClientRequest(networkConfig, 0, request, utilisateur, requestBytes);
         } else {
             throw new IllegalArgumentException("Requête non supportée : " + requestOrder);
@@ -100,22 +88,16 @@ public class UtilisateurService {
             processedRequest.join();
 
             final Utilisateur processedUtilisateur = (Utilisateur) processedRequest.getInfo();
-            logger.debug("Thread {} terminé : {} {} {}  --> {}",
-                    processedRequest.getThreadName(),
-                    processedUtilisateur.getNom(), processedUtilisateur.getPrenom(), processedUtilisateur.getEmail(),
-                    processedRequest.getResult());
+            logger.debug("Thread {} terminé : {} {} {}  --> {}", processedRequest.getThreadName(), processedUtilisateur.getNom(), processedUtilisateur.getPrenom(), processedUtilisateur.getEmail(), processedRequest.getResult());
 
-            if ("INSERT_UTILISATEUR".equals(requestOrder)) {
+            if (insertRequestOrder.equals(requestOrder)) {
                 return (String) processedRequest.getResult();
             }
         }
 
-        return "OK"; // Si update ou delete
+        return "OK";
     }
 
-    /**
-     * Récupère tous les utilisateurs.
-     */
     public Utilisateurs selectUtilisateurs() throws InterruptedException, IOException {
         final Deque<ClientRequest> utilisateurRequests = new ArrayDeque<>();
         final ObjectMapper objectMapper = new ObjectMapper();
@@ -129,8 +111,7 @@ public class UtilisateurService {
 
         logger.debug("Envoi de la requête SELECT_ALL_UTILISATEURS avec ID {}", requestId);
 
-        final SelectAllUtilisateursClientRequest utilisateurRequest = new SelectAllUtilisateursClientRequest(
-                networkConfig, 0, request, null, requestBytes);
+        final SelectAllUtilisateursClientRequest utilisateurRequest = new SelectAllUtilisateursClientRequest(networkConfig, 0, request, null, requestBytes);
         utilisateurRequests.push(utilisateurRequest);
 
         if (!utilisateurRequests.isEmpty()) {
@@ -152,22 +133,51 @@ public class UtilisateurService {
         }
     }
 
-    /**
-     * Vérifie si un email existe déjà en base.
-     */
     public boolean checkEmailExists(String email) throws InterruptedException, IOException {
+        return checkIfFieldExists(email, selectByEmailRequestOrder);
+    }
+
+    public boolean emailExiste(String email, int currentUserId) throws InterruptedException, IOException {
+        return checkIfFieldExistsWithId(email, currentUserId, selectByEmailRequestOrder);
+    }
+
+    public boolean nomUtilisateurExiste(String nomUtilisateur, int currentUserId) throws InterruptedException, IOException {
+        return checkIfFieldExistsWithId(nomUtilisateur, currentUserId, selectByNomUtilisateurRequestOrder);
+    }
+
+    private boolean checkIfFieldExists(String fieldValue, String requestOrder) throws InterruptedException, IOException {
+        Utilisateur utilisateur = new Utilisateur();
+        if (requestOrder.equals(selectByEmailRequestOrder)) {
+            utilisateur.setEmail(fieldValue);
+        } else {
+            utilisateur.setNomUtilisateur(fieldValue);
+        }
+
+        return checkFieldExistence(utilisateur, requestOrder);
+    }
+
+    private boolean checkIfFieldExistsWithId(String fieldValue, int currentUserId, String requestOrder) throws InterruptedException, IOException {
+        Utilisateur utilisateur = new Utilisateur();
+        if (requestOrder.equals(selectByEmailRequestOrder)) {
+            utilisateur.setEmail(fieldValue);
+        } else {
+            utilisateur.setNomUtilisateur(fieldValue);
+        }
+        utilisateur.setIdUtilisateur(currentUserId);
+
+        return checkFieldExistence(utilisateur, requestOrder);
+    }
+
+    private boolean checkFieldExistence(Utilisateur utilisateur, String requestOrder) throws InterruptedException, IOException {
         final Deque<ClientRequest> utilisateurRequests = new ArrayDeque<>();
         final ObjectMapper objectMapper = new ObjectMapper();
 
-        Utilisateur utilisateur = new Utilisateur();
-        utilisateur.setEmail(email);
-
         final String jsonifiedUtilisateur = objectMapper.writerWithDefaultPrettyPrinter().writeValueAsString(utilisateur);
-
         final String requestId = UUID.randomUUID().toString();
+
         final Request request = new Request();
         request.setRequestId(requestId);
-        request.setRequestOrder(selectByEmailRequestOrder);
+        request.setRequestOrder(requestOrder);
         request.setRequestContent(jsonifiedUtilisateur);
         objectMapper.enable(SerializationFeature.WRAP_ROOT_VALUE);
         final byte[] requestBytes = objectMapper.writerWithDefaultPrettyPrinter().writeValueAsBytes(request);
@@ -198,8 +208,8 @@ public class UtilisateurService {
         utilisateur.setPassword(password);
 
         final String jsonifiedUtilisateur = objectMapper.writerWithDefaultPrettyPrinter().writeValueAsString(utilisateur);
-
         final String requestId = UUID.randomUUID().toString();
+
         final Request request = new Request();
         request.setRequestId(requestId);
         request.setRequestOrder(selectByEmailPasswordRequestOrder);
@@ -221,8 +231,6 @@ public class UtilisateurService {
                 return !utilisateurs.getUtilisateurs().isEmpty();
             }
         }
-
         return false;
     }
-
 }
