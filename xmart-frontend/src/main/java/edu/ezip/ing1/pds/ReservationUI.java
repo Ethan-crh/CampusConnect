@@ -32,43 +32,32 @@ public class ReservationUI {
         // Créer la fenêtre principale avec deux boutons
         JFrame frame = new JFrame("Gestion des Réservations");
         frame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
-        frame.setSize(900, 551);
+        frame.setSize(900, 550);
         frame.setLocationRelativeTo(null);
 
-        // Créer un panel avec un layout vertical
-        JPanel panel = new JPanel();
-        panel.setLayout(new GridLayout(2, 1, 10, 10));
+        UtilisateurUI.GradientPanel gradientPanel = new UtilisateurUI.GradientPanel();
+        gradientPanel.setLayout(new BoxLayout(gradientPanel, BoxLayout.Y_AXIS));
+        gradientPanel.setBorder(BorderFactory.createEmptyBorder(100, 300, 100, 300));
+
+        JLabel title = new JLabel("Gestion des Utilisateurs");
+        title.setFont(new Font("SansSerif", Font.BOLD, 24));
+        title.setForeground(Color.LIGHT_GRAY);
+        title.setAlignmentX(Component.CENTER_ALIGNMENT);
+        gradientPanel.add(title);
+        gradientPanel.add(Box.createVerticalStrut(30));
 
         // Boutons pour afficher la liste des réservations et créer une nouvelle réservation
-        JButton afficherButton = new JButton("Liste des Réservations");
-        JButton creerButton = new JButton("Créer Nouvelle Réservation");
+        JButton afficherButton = createStyledButton("Liste des Réservations");
+        JButton creerButton = createStyledButton("Créer Nouvelle Réservation");
 
-        // ActionListener pour afficher la liste des réservations
-        afficherButton.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                // Appeler la méthode pour afficher la liste des réservations
-                afficherListeReservations();
-            }
-        });
+        afficherButton.addActionListener(e -> afficherListeReservations());
+        creerButton.addActionListener(e -> afficherFormulaireCreation());
 
-        // ActionListener pour créer une nouvelle réservation
-        creerButton.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                // Ouvrir un formulaire pour créer une nouvelle réservation
-                afficherFormulaireCreation();
-            }
-        });
+        gradientPanel.add(afficherButton);
+        gradientPanel.add(Box.createVerticalStrut(15));
+        gradientPanel.add(creerButton);
 
-        // Ajouter les boutons au panel
-        panel.add(afficherButton);
-        panel.add(creerButton);
-
-        // Ajouter le panel à la fenêtre principale
-        frame.add(panel);
-
-        // Afficher la fenêtre principale
+        frame.setContentPane(gradientPanel);
         frame.setVisible(true);
     }
 
@@ -427,5 +416,37 @@ public class ReservationUI {
 
         frame.add(panel);
         frame.setVisible(true);
+    }
+
+// Bouton style
+private static JButton createStyledButton(String text) {
+    JButton btn = new JButton(text);
+    btn.setAlignmentX(Component.CENTER_ALIGNMENT);
+    btn.setMaximumSize(new Dimension(200, 40));
+    btn.setFocusPainted(false);
+    btn.setForeground(Color.CYAN);
+    btn.setBackground(new Color(0, 0, 0, 0)); // fond transparent
+    btn.setBorder(BorderFactory.createLineBorder(Color.CYAN));
+    btn.setFont(new Font("SansSerif", Font.PLAIN, 14));
+    return btn;
+}
+
+// bouton normal
+private static JButton createDefaultButton(String text) {
+    return new JButton(text); // Bouton classique sans style
+}
+
+// panel degrade
+static class GradientPanel extends JPanel {
+    @Override
+    protected void paintComponent(Graphics g) {
+        super.paintComponent(g);
+        Graphics2D g2d = (Graphics2D) g;
+        Color c1 = new Color(10, 10, 30);
+        Color c2 = new Color(30, 50, 80);
+        GradientPaint gp = new GradientPaint(0, 0, c1, getWidth(), getHeight(), c2);
+        g2d.setPaint(gp);
+        g2d.fillRect(0, 0, getWidth(), getHeight());
+        }
     }
 }
