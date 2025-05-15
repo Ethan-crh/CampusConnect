@@ -32,7 +32,7 @@ public class ReservationUI {
         // Créer la fenêtre principale avec deux boutons
         JFrame frame = new JFrame("Gestion des Réservations");
         frame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
-        frame.setSize(900, 550);
+        frame.setSize(900, 551);
         frame.setLocationRelativeTo(null);
 
         // Créer un panel avec un layout vertical
