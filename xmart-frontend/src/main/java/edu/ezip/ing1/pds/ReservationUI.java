@@ -15,6 +15,7 @@ import java.io.IOException;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.sql.Time;
+import java.util.Calendar;
 import java.util.Date;
 
 public class ReservationUI {
@@ -363,7 +364,11 @@ public class ReservationUI {
             public void actionPerformed(ActionEvent e) {
                 try {
                     String nom = nomField.getText();
-                    Date date = dateField.getDate();
+                    Date selectedDate = dateField.getDate();
+                    Calendar calendar = Calendar.getInstance();
+                    calendar.setTime(selectedDate);
+                    calendar.add(Calendar.DATE, 1); // ajouter un jour
+                    Date date = calendar.getTime();
                     String heureDebutStr = heureDebutField.getText();
                     String heureFinStr = heureFinField.getText();
                     String type = (String) typeComboBox.getSelectedItem();
@@ -397,7 +402,7 @@ public class ReservationUI {
                     }
 
                     reservation.setName(nomField.getText());
-                    reservation.setDate(dateField.getDate());
+                    reservation.setDate(date);
                     reservation.setHeuredeb(Time.valueOf(heureDebutField.getText() + ":00"));
                     reservation.setHeurefin(Time.valueOf(heureFinField.getText() + ":00"));
                     reservation.setType((String) typeComboBox.getSelectedItem());
