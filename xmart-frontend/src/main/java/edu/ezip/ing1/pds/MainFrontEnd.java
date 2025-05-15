@@ -18,7 +18,7 @@ public class MainFrontEnd {
         try {
             UIManager.setLookAndFeel(new FlatDarkLaf());
         } catch (Exception e) {
-            System.err.println("Erreur FlatLaf");
+            System.err.println("Erreur FlatLaf : " + e.getMessage());
         }
 
         SwingUtilities.invokeLater(MainFrontEnd::afficherConnexion);
@@ -34,7 +34,6 @@ public class MainFrontEnd {
         panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
         panel.setBorder(BorderFactory.createEmptyBorder(40, 200, 40, 200));
 
-        // ---------- TITRE ----------
         JLabel title = new JLabel("CampusConnect");
         title.setFont(new Font("SansSerif", Font.BOLD, 32));
         title.setForeground(Color.LIGHT_GRAY);
@@ -42,9 +41,7 @@ public class MainFrontEnd {
         panel.add(title);
         panel.add(Box.createVerticalStrut(30));
 
-        // ---------- FORMULAIRE ----------
-        JPanel formPanel = new JPanel();
-        formPanel.setLayout(new GridLayout(4, 1, 10, 10));
+        JPanel formPanel = new JPanel(new GridLayout(4, 1, 10, 10));
         formPanel.setOpaque(false);
 
         JLabel emailLabel = new JLabel("Adresse e-mail :");
@@ -63,7 +60,6 @@ public class MainFrontEnd {
         panel.add(formPanel);
         panel.add(Box.createVerticalStrut(20));
 
-        // ---------- BOUTON ----------
         JButton loginButton = new JButton("Se connecter");
         loginButton.setAlignmentX(Component.CENTER_ALIGNMENT);
         loginButton.setBackground(new Color(30, 100, 220));
@@ -77,7 +73,6 @@ public class MainFrontEnd {
         frame.setContentPane(panel);
         frame.setVisible(true);
 
-        // ---------- ACTION ----------
         loginButton.addActionListener(e -> {
             String email = emailField.getText().trim();
             String password = new String(passwordField.getPassword()).trim();
@@ -98,6 +93,8 @@ public class MainFrontEnd {
 
                     if (email.equalsIgnoreCase("admin@cc.com") && password.equals("Admin00@")) {
                         lancerMainApp(networkConfig); // Admin interface
+                    } else if (email.equalsIgnoreCase("ag@cc.com") && password.equals("Agent00@")) {
+                        new AgentUI(networkConfig).afficherCapteurs(); // Agent interface
                     } else {
                         InterfaceUtilisateurUI.afficher(networkConfig); // Standard user interface
                     }
@@ -112,7 +109,6 @@ public class MainFrontEnd {
         });
     }
 
-    // ---------- LANCEMENT APP PRINCIPALE ----------
     private static void lancerMainApp(NetworkConfig networkConfig) throws IOException, InterruptedException {
         final CapteurService capteurService = new CapteurService(networkConfig);
         final UtilisateurService utilisateurService = new UtilisateurService(networkConfig);
@@ -122,7 +118,7 @@ public class MainFrontEnd {
         Utilisateurs utilisateurs = utilisateurService.selectUtilisateurs();
         Reservations reservations = reservationService.selectReservations();
 
-        JFrame frame = new JFrame("CAMPUS CONNECT");
+        JFrame frame = new JFrame("CAMPUS CONNECT - Admin");
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         frame.setSize(900, 550);
         frame.setLocationRelativeTo(null);
@@ -168,7 +164,6 @@ public class MainFrontEnd {
         return btn;
     }
 
-    // ---------- PANEL DÉGRADÉ ----------
     static class GradientPanel extends JPanel {
         @Override
         protected void paintComponent(Graphics g) {
