@@ -1,5 +1,6 @@
 package edu.ezip.ing1.pds;
 
+import com.toedter.calendar.JDateChooser;
 import edu.ezip.ing1.pds.business.dto.Reservation;
 import edu.ezip.ing1.pds.business.dto.Reservations;
 import edu.ezip.ing1.pds.client.commons.NetworkConfig;
@@ -23,6 +24,8 @@ public class ReservationUI {
     public ReservationUI(NetworkConfig networkConfig) {
         this.reservationService = new ReservationService(networkConfig);
     }
+
+    SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd"); // Format date
 
     public void afficherReservations(Reservations reservations) {
         // Créer la fenêtre principale avec deux boutons
@@ -70,6 +73,7 @@ public class ReservationUI {
 
     // Méthode pour afficher la liste des réservations
     private void afficherListeReservations() {
+
         Reservations reservations;
         try {
             reservations = reservationService.selectReservations();
@@ -96,7 +100,7 @@ public class ReservationUI {
                 Object[] row = {
                         reservation.getId(),
                         reservation.getName(),
-                        reservation.getDate(),
+                        dateFormat.format(reservation.getDate()),
                         reservation.getHeuredeb(),
                         reservation.getHeurefin(),
                         reservation.getType(),
@@ -105,6 +109,7 @@ public class ReservationUI {
                 tableModel.addRow(row);
             }
         } else {
+            // Cas d'un manque de réservation
             tableModel.addRow(new Object[]{"", "Aucune réservation trouvée", "", "", "", "", ""});
         }
 
@@ -119,7 +124,13 @@ public class ReservationUI {
 
             int id = (int) tableModel.getValueAt(selectedRow, 0);
             String nom = (String) tableModel.getValueAt(selectedRow, 1);
-            Date date = (Date) tableModel.getValueAt(selectedRow, 2);
+            String dateStr = (String) tableModel.getValueAt(selectedRow, 2);
+            Date date = null;
+            try {
+                date = dateFormat.parse(dateStr);
+            } catch (ParseException wrongdate) {
+                throw new RuntimeException(wrongdate);
+            }
             Time heureDebut = (Time) tableModel.getValueAt(selectedRow, 3);
             Time heureFin = (Time) tableModel.getValueAt(selectedRow, 4);
             String type = (String) tableModel.getValueAt(selectedRow, 5);
@@ -148,6 +159,7 @@ public class ReservationUI {
 
             int id = (int) tableModel.getValueAt(selectedRow, 0);
             String nom = (String) tableModel.getValueAt(selectedRow, 1);
+
 
             int confirm = JOptionPane.showConfirmDialog(frame,
                     "Voulez-vous vraiment supprimer la réservation " + nom + " ?",
@@ -198,21 +210,23 @@ public class ReservationUI {
         JTextField nomField = new JTextField();
         panel.add(nomField);
 
-        panel.add(new JLabel("Date (dd-MM-yyyy) :"));
-        JTextField dateField = new JTextField();
+        panel.add(new JLabel("Date (yyyy-MM-dd) :"));
+        JDateChooser dateField = new JDateChooser();
+        dateField.setDateFormatString("yyyy-MM-dd");
         panel.add(dateField);
 
-        panel.add(new JLabel("Heure de début (HH:mm:ss) :"));
+        panel.add(new JLabel("Heure de début (HH:mm) :"));
         JTextField heureDebutField = new JTextField();
         panel.add(heureDebutField);
 
-        panel.add(new JLabel("Heure de fin (HH:mm:ss) :"));
+        panel.add(new JLabel("Heure de fin (HH:mm) :"));
         JTextField heureFinField = new JTextField();
         panel.add(heureFinField);
 
         panel.add(new JLabel("Type :"));
-        JTextField typeField = new JTextField();
-        panel.add(typeField);
+        String[] types = {"Cours", "Examen", "Révision", "Réunion", "Autre"};
+        JComboBox<String> typeComboBox = new JComboBox<>(types);
+        panel.add(typeComboBox);
 
         panel.add(new JLabel("Description :"));
         JTextField descriptionField = new JTextField();
@@ -228,18 +242,51 @@ public class ReservationUI {
             public void actionPerformed(ActionEvent e) {
                 try {
                     String nom = nomField.getText();
-                    String dateStr = dateField.getText();
+                    Date date = dateField.getDate();
                     String heureDebutStr = heureDebutField.getText();
                     String heureFinStr = heureFinField.getText();
-                    String type = typeField.getText();
+                    String type = (String) typeComboBox.getSelectedItem();
                     String description = descriptionField.getText();
 
-                    // Conversion des champs
-                    SimpleDateFormat dateFormat = new SimpleDateFormat("dd-MM-yyyy");
-                    Date date = dateFormat.parse(dateStr);
+// Spécificités fonctionnelles : Pas de cases vides
+                    if (nom.isEmpty() || date == null || heureDebutStr.isEmpty() || heureFinStr.isEmpty() || type.isEmpty() || description.isEmpty()) {
+                        JOptionPane.showMessageDialog(frame, "Tous les champs doivent être remplis.");
+                        return;
+                    }
+// SP : Format date correspondant à des chiffres puis vérification du format date
+                   /* if (!dateStr.matches("\\d{4}-\\d{2}-\\d{2}")) {
+                        JOptionPane.showMessageDialog(frame, "Le format de la date est incorrect. Format attendu : yyyy-MM-dd");
+                        return;
+                    }
+
+                    try {
+                        LocalDate.parse(dateStr);
+                    } catch (DateTimeParseException dateexception) {
+                        JOptionPane.showMessageDialog(frame, "La date est invalide. Elle doit exister réellement.");
+                        return;
+                    }*/
+
+                    // Spécificités fonctionnelles : Nom, moins de 80 caractères
+                    if (nom.length() > 80) {
+                        JOptionPane.showMessageDialog(frame, "Le nom ne doit pas dépasser 80 caractères.");
+                        return;
+                    }
+
+                    // SP : Date ne peut être dans le passé
+                    if (date.before(new Date())) {
+                        JOptionPane.showMessageDialog(frame, "La réservation ne peut pas être dans le passé.");
+                        return;
+                    }
 
                     Time heureDebut = Time.valueOf(heureDebutStr + ":00");
                     Time heureFin = Time.valueOf(heureFinStr + ":00");
+
+                    // SP : Heure de début ne peut pas être après heure de fin
+                    if (heureDebut.after(heureFin)) {
+                        JOptionPane.showMessageDialog(frame, "L'heure de début ne peut pas être après l'heure de fin.");
+                        return;
+                    }
+
 
                     // Créer un objet Reservation
                     Reservation reservation = new Reservation();
@@ -253,13 +300,12 @@ public class ReservationUI {
                     // Appeler la méthode du service pour ajouter la réservation à la base de données
                     reservationService.insertReservation(reservation);
                     JOptionPane.showMessageDialog(frame, "Réservation créée avec succès !");
-                } catch (ParseException parseEx) {
-                    JOptionPane.showMessageDialog(frame, "Erreur de format pour la date : " + parseEx.getMessage());
                 } catch (IllegalArgumentException iaEx) {
                     JOptionPane.showMessageDialog(frame, "Erreur de format pour l'heure : " + iaEx.getMessage());
                 } catch (IOException | InterruptedException ex) {
                     JOptionPane.showMessageDialog(frame, "Erreur lors de la création de la réservation : " + ex.getMessage());
                 }
+
 
                 frame.dispose();  // Fermer le formulaire après création
             }
@@ -287,37 +333,74 @@ public class ReservationUI {
         panel.add(nomField);
 
         panel.add(new JLabel("Date (yyyy-MM-dd) :"));
-        JTextField dateField = new JTextField(reservation.getDate().toString());
+        JDateChooser dateField = new JDateChooser();
+        dateField.setDateFormatString("yyyy-MM-dd");
+        dateField.setDate(reservation.getDate());
         panel.add(dateField);
 
-        panel.add(new JLabel("Heure de début (HH:mm:ss) :"));
+        panel.add(new JLabel("Heure de début (HH:mm) :"));
         JTextField heureDebutField = new JTextField(reservation.getHeuredeb().toString());
         panel.add(heureDebutField);
 
-        panel.add(new JLabel("Heure de fin (HH:mm:ss) :"));
+        panel.add(new JLabel("Heure de fin (HH:mm) :"));
         JTextField heureFinField = new JTextField(reservation.getHeurefin().toString());
         panel.add(heureFinField);
 
         panel.add(new JLabel("Type :"));
-        JTextField typeField = new JTextField(reservation.getType());
-        panel.add(typeField);
+        String[] types = {"Cours", "Examen", "Révision", "Réunion", "Autre"};
+        JComboBox<String> typeComboBox = new JComboBox<>(types);
+        panel.add(typeComboBox);
 
         panel.add(new JLabel("Description :"));
         JTextField descriptionField = new JTextField(reservation.getDescription());
         panel.add(descriptionField);
 
+
         JButton updateButton = new JButton("Mettre à jour");
         panel.add(updateButton);
 
         updateButton.addActionListener(new ActionListener() {
-            @Override
             public void actionPerformed(ActionEvent e) {
                 try {
+                    String nom = nomField.getText();
+                    Date date = dateField.getDate();
+                    String heureDebutStr = heureDebutField.getText();
+                    String heureFinStr = heureFinField.getText();
+                    String type = (String) typeComboBox.getSelectedItem();
+                    String description = descriptionField.getText();
+
+                    // Spécificités fonctionnelles : Pas de cases vides
+                    if (nom.isEmpty() || date == null || heureDebutStr.isEmpty() || heureFinStr.isEmpty() || type.isEmpty() || description.isEmpty()) {
+                        JOptionPane.showMessageDialog(frame, "Tous les champs doivent être remplis.");
+                        return;
+                    }
+
+                    // Spécificités fonctionnelles : Nom, moins de 80 caractères
+                    if (nom.length() > 80) {
+                        JOptionPane.showMessageDialog(frame, "Le nom ne doit pas dépasser 80 caractères.");
+                        return;
+                    }
+
+                    // SP : Date ne peut être dans le passé
+                    if (date.before(new Date())) {
+                        JOptionPane.showMessageDialog(frame, "La réservation ne peut pas être dans le passé.");
+                        return;
+                    }
+
+                    Time heureDebut = Time.valueOf(heureDebutStr + ":00");
+                    Time heureFin = Time.valueOf(heureFinStr + ":00");
+
+                    // SP : Heure de début ne peut pas être après heure de fin
+                    if (heureDebut.after(heureFin)) {
+                        JOptionPane.showMessageDialog(frame, "L'heure de début ne peut pas être après l'heure de fin.");
+                        return;
+                    }
+
                     reservation.setName(nomField.getText());
-                    reservation.setDate(new SimpleDateFormat("dd-MM-yyyy").parse(dateField.getText()));
+                    reservation.setDate(dateField.getDate());
                     reservation.setHeuredeb(Time.valueOf(heureDebutField.getText() + ":00"));
                     reservation.setHeurefin(Time.valueOf(heureFinField.getText() + ":00"));
-                    reservation.setType(typeField.getText());
+                    reservation.setType((String) typeComboBox.getSelectedItem());
                     reservation.setDescription(descriptionField.getText());
 
                     reservationService.updateReservation(reservation);
@@ -329,8 +412,6 @@ public class ReservationUI {
                     tableModel.setValueAt(reservation.getDescription(), selectedRow, 6);
                     JOptionPane.showMessageDialog(frame, "Réservation mise à jour avec succès !");
                     frame.dispose();
-                } catch (ParseException parseEx) {
-                    JOptionPane.showMessageDialog(frame, "Erreur de format pour la date : " + parseEx.getMessage());
                 } catch (IllegalArgumentException iaEx) {
                     JOptionPane.showMessageDialog(frame, "Erreur de format pour l'heure : " + iaEx.getMessage());
                 } catch (IOException | InterruptedException ex) {
