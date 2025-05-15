@@ -36,6 +36,8 @@ public class XMartCityService {
         DELETE_UTILISATEUR("DELETE FROM Utilisateur WHERE id_utilisateur = ?"),
         SELECT_UTILISATEUR_BY_EMAIL("SELECT * FROM Utilisateur WHERE email = ?"),
         SELECT_UTILISATEUR_BY_EMAIL_PASSWORD("SELECT * FROM Utilisateur WHERE email = ? AND password = ?"),
+        SELECT_UTILISATEUR_BY_EMAIL_EXCLUDING_ID("SELECT * FROM Utilisateur WHERE email = ? AND id_utilisateur != ?"),
+        SELECT_UTILISATEUR_BY_NOM_UTILISATEUR_EXCLUDING_ID("SELECT * FROM Utilisateur WHERE nom_utilisateur = ? AND id_utilisateur != ?"),
 
         SELECT_ALL_CAPTEURS("SELECT * FROM Capteurs "),
         INSERT_CAPTEUR("INSERT INTO Capteurs (id_capteur , statut, presence , detection_probleme) VALUES (?, ?, ?, ?)"),
@@ -109,6 +111,12 @@ public class XMartCityService {
             case DELETE_UTILISATEUR:
                 response = deleteUtilisateur(request, connection);
                 break;
+            case SELECT_UTILISATEUR_BY_EMAIL_EXCLUDING_ID:
+                response = selectUtilisateurByEmailExcludingId(request, connection);
+                break;
+            case SELECT_UTILISATEUR_BY_NOM_UTILISATEUR_EXCLUDING_ID:
+                response = selectUtilisateurByNomExcludingId(request, connection);
+                break;
             case SELECT_ALL_CAPTEURS:
                 response = selectAllCapteurs(request, connection);
                 break;
@@ -142,65 +150,7 @@ public class XMartCityService {
         return response;
     }
 
-    /*public final Response dispatchUn(final Request request, final Connection connection)
-            throws InvocationTargetException, IllegalAccessException, SQLException, IOException {
-        Response response = null;
 
-        final Queries queryEnum = Enum.valueOf(Queries.class, request.getRequestOrder());
-        switch(queryEnum) {
-
-            case SELECT_ALL_CAPTEURS:
-                response = selectAllCapteurs(request, connection);
-                break;
-            case INSERT_CAPTEUR:
-                response = insertCapteur(request, connection);
-                break;
-            default:
-                break;
-        }
-
-        return response;
-    }
-
-    public final Response dispatchDeux(final Request request, final Connection connection)
-            throws InvocationTargetException, IllegalAccessException, SQLException, IOException {
-        Response response = null;
-
-        final Queries2 queryEnum = Enum.valueOf(Queries2.class, request.getRequestOrder());
-        switch(queryEnum) {
-
-            case SELECT_ALL_RESERVATIONS:
-                response = selectAllReservations(request, connection);
-                break;
-            case INSERT_RESERVATION:
-                response = insertReservation(request, connection);
-                break;
-            default:
-                break;
-        }
-
-        return response;
-    }
-
-/*  private Response InsertStudent(final Request request, final Connection connection) throws SQLException, IOException {
-//
-//        final ObjectMapper objectMapper = new ObjectMapper();
-//        final Student student = objectMapper.readValue(request.getRequestBody(), Student.class);
-//
-//        final PreparedStatement stmt = connection.prepareStatement(Queries.INSERT_STUDENT.query);
-//        stmt.setString(1, student.getName());
-//        stmt.setString(2, student.getFirstname());
-//        stmt.setString(3, student.getGroup());
-//        stmt.executeUpdate();
-//
-//        final Statement stmt2 = connection.createStatement();
-//        final ResultSet res = stmt2.executeQuery("SELECT LAST_INSERT_ID()");
-//        res.next();
-//
-//        student.setId(res.getInt(1));
-//
-//        return new Response(request.getRequestId(), objectMapper.writeValueAsString(student));
-//    }*/
 
     private Response insertUtilisateur(final Request request, final Connection connection) throws SQLException, IOException {
         final ObjectMapper objectMapper = new ObjectMapper();
@@ -252,45 +202,7 @@ public class XMartCityService {
 
         return new Response(request.getRequestId(), objectMapper.writeValueAsString(reservation));
     }
-    /*private Response insertReservation(final Request request, final Connection connection) throws SQLException, IOException {
-        final ObjectMapper objectMapper = new ObjectMapper();
-        final Reservation reservation = objectMapper.readValue(request.getRequestBody(), Reservation.class);
 
-        final PreparedStatement stmt = connection.prepareStatement(Queries.INSERT_RESERVATION.query);
-        stmt.setString(1, reservation.getId());
-        stmt.setString(2, reservation.getName());
-        stmt.setString(3, String.valueOf(reservation.getDate()));
-        stmt.setString(4, String.valueOf(reservation.getHeuredeb()));
-        stmt.setString(5, String.valueOf(reservation.getHeurefin()));
-        stmt.setString(6, reservation.getType());
-        stmt.setString(7, reservation.getDescription());
-        stmt.executeUpdate();
-
-        final Statement stmt2 = connection.createStatement();
-        final ResultSet res = stmt2.executeQuery("SELECT LAST_INSERT_ID()");
-        res.next();
-
-        reservation.setId(res.getString(1));
-
-        return new Response(request.getRequestId(), objectMapper.writeValueAsString(reservation));
-    }*/
-
-
-    /*private Response SelectAllUsers(final Request request, final Connection connection) throws SQLException, JsonProcessingException {
-       final ObjectMapper objectMapper = new ObjectMapper();
-        final Statement stmt = connection.createStatement();
-        final ResultSet res = stmt.executeQuery(Queries.SELECT_ALL_STUDENTS.query);
-        Utilisateur students = new Students();
-        while (res.next()) {
-            Student student = new Student();
-            student.setName(res.getString(1));
-            student.setFirstname(res.getString(2));
-            student.setGroup(res.getString(3));
-            student.setId(res.getInt(4));
-            students.add(student);
-        }
-        return new Response(request.getRequestId(), objectMapper.writeValueAsString(students));
-    }*/
 
     private Response selectAllUtilisateurs(final Request request, final Connection connection) throws SQLException, JsonProcessingException {
         final ObjectMapper objectMapper = new ObjectMapper();
@@ -314,7 +226,7 @@ public class XMartCityService {
         return new Response(request.getRequestId(), objectMapper.writeValueAsString(utilisateurs));
     }
 
-        public Response  selectConectionCondition (Request request, Connection connection) throws IOException, SQLException {
+    public Response  selectConectionCondition (Request request, Connection connection) throws IOException, SQLException {
         final ObjectMapper objectMapper = new ObjectMapper();
 
         String email;
@@ -368,6 +280,32 @@ public class XMartCityService {
         return new Response(request.getRequestId(), objectMapper.writeValueAsString(utilisateurs));
     }
 
+
+    private Response selectUtilisateurByEmailExcludingId(final Request request, final Connection connection) throws SQLException, IOException {
+        final ObjectMapper objectMapper = new ObjectMapper();
+        Utilisateur utilisateur = objectMapper.readValue(request.getRequestBody(), Utilisateur.class);
+
+        final PreparedStatement stmt = connection.prepareStatement(Queries.SELECT_UTILISATEUR_BY_EMAIL_EXCLUDING_ID.query);
+        stmt.setString(1, utilisateur.getEmail());
+        stmt.setInt(2, utilisateur.getIdUtilisateur());
+
+        ResultSet res = stmt.executeQuery();
+        Utilisateurs utilisateurs = new Utilisateurs();
+
+        while (res.next()) {
+            Utilisateur u = new Utilisateur();
+            u.setIdUtilisateur(res.getInt("id_utilisateur"));
+            utilisateurs.add(u);
+        }
+
+        res.close();
+        stmt.close();
+
+        return new Response(request.getRequestId(), objectMapper.writeValueAsString(utilisateurs));
+    }
+
+
+
     private Response updateUtilisateur(final Request request, final Connection connection) throws SQLException, IOException {
         final ObjectMapper objectMapper = new ObjectMapper();
         final Utilisateur utilisateur = objectMapper.readValue(request.getRequestBody(), Utilisateur.class);
@@ -404,6 +342,32 @@ public class XMartCityService {
 
         return new Response(request.getRequestId(), "Utilisateur supprimé avec succès.");
     }
+
+
+    private Response selectUtilisateurByNomExcludingId(final Request request, final Connection connection) throws SQLException, IOException {
+        final ObjectMapper objectMapper = new ObjectMapper();
+        Utilisateur utilisateur = objectMapper.readValue(request.getRequestBody(), Utilisateur.class);
+
+        final PreparedStatement stmt = connection.prepareStatement(Queries.SELECT_UTILISATEUR_BY_NOM_UTILISATEUR_EXCLUDING_ID.query);
+        stmt.setString(1, utilisateur.getNomUtilisateur());
+        stmt.setInt(2, utilisateur.getIdUtilisateur());
+
+        ResultSet res = stmt.executeQuery();
+        Utilisateurs utilisateurs = new Utilisateurs();
+
+        while (res.next()) {
+            Utilisateur u = new Utilisateur();
+            u.setIdUtilisateur(res.getInt("id_utilisateur"));
+            utilisateurs.add(u);
+        }
+
+        res.close();
+        stmt.close();
+
+        return new Response(request.getRequestId(), objectMapper.writeValueAsString(utilisateurs));
+    }
+
+
 
 
 
