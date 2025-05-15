@@ -11,6 +11,7 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.IOException;
+import java.util.UUID;
 
 public class CapteurUI {
 
@@ -185,7 +186,9 @@ public class CapteurUI {
 
         // Ajout des labels et des champs de texte pour saisir les informations du capteur
         JLabel idLabel = new JLabel("ID Capteur :");
-        JTextField idField = new JTextField(10);
+        String generatedId = generateUniqueCapteurId();
+        JTextField idField = new JTextField(generatedId);
+        idField.setEditable(false);
         JLabel statutLabel = new JLabel("Statut (Actif/Inactif) :");
         String[] statutOptions = {"Actif", "Inactif"};
         JComboBox<String> statutComboBox = new JComboBox<>(statutOptions);
@@ -258,6 +261,28 @@ public class CapteurUI {
         frame.setVisible(true);
     }
 
+    private String generateUniqueCapteurId() {
+        try {
+            Capteurs capteurs = capteurService.selectCapteurs();
+            int maxId = 0;
+
+            for (Capteur capteur : capteurs.getCapteurs()) {
+                try {
+                    int id = Integer.parseInt(capteur.getId());
+                    if (id > maxId) {
+                        maxId = id;
+                    }
+                } catch (NumberFormatException ignored) {
+                    // Ignore les IDs non numériques
+                }
+            }
+
+            return String.valueOf(maxId + 1); // Incrémente l'ID max
+        } catch (Exception e) {
+            // En cas d'erreur, retourne un UUID aléatoire
+            return UUID.randomUUID().toString();
+        }
+    }
 
 
     private void afficherFormulaireModification(Capteur capteur, DefaultTableModel tableModel, int selectedRow) {
