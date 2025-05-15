@@ -13,7 +13,7 @@ import java.io.IOException;
 
 public class UtilisateurUI {
 
-    private final UtilisateurService utilisateurService;
+    private UtilisateurService utilisateurService;
 
     public UtilisateurUI(NetworkConfig networkConfig) {
         this.utilisateurService = new UtilisateurService(networkConfig);
@@ -25,14 +25,16 @@ public class UtilisateurUI {
         frame.setSize(900, 550);
         frame.setLocationRelativeTo(null);
 
-        GradientPanel panel = new GradientPanel();
-        panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
-        panel.setBorder(BorderFactory.createEmptyBorder(40, 100, 40, 100));
+        GradientPanel gradientPanel = new GradientPanel();
+        gradientPanel.setLayout(new BoxLayout(gradientPanel, BoxLayout.Y_AXIS));
+        gradientPanel.setBorder(BorderFactory.createEmptyBorder(100, 300, 100, 300));
 
-        JLabel titleLabel = new JLabel("Gestion des Utilisateurs");
-        titleLabel.setFont(new Font("SansSerif", Font.BOLD, 22));
-        titleLabel.setForeground(Color.WHITE);
-        titleLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
+        JLabel title = new JLabel("Gestion des Utilisateurs");
+        title.setFont(new Font("SansSerif", Font.BOLD, 24));
+        title.setForeground(Color.LIGHT_GRAY);
+        title.setAlignmentX(Component.CENTER_ALIGNMENT);
+        gradientPanel.add(title);
+        gradientPanel.add(Box.createVerticalStrut(30));
 
         JButton afficherButton = createStyledButton("Liste des Utilisateurs");
         JButton creerButton = createStyledButton("Créer Nouveau Utilisateur");
@@ -40,26 +42,12 @@ public class UtilisateurUI {
         afficherButton.addActionListener(e -> afficherListeUtilisateurs());
         creerButton.addActionListener(e -> afficherFormulaireCreation());
 
-        panel.add(titleLabel);
-        panel.add(Box.createVerticalStrut(30));
-        panel.add(afficherButton);
-        panel.add(Box.createVerticalStrut(15));
-        panel.add(creerButton);
+        gradientPanel.add(afficherButton);
+        gradientPanel.add(Box.createVerticalStrut(15));
+        gradientPanel.add(creerButton);
 
-        frame.setContentPane(panel);
+        frame.setContentPane(gradientPanel);
         frame.setVisible(true);
-    }
-
-    private JButton createStyledButton(String text) {
-        JButton btn = new JButton(text);
-        btn.setAlignmentX(Component.CENTER_ALIGNMENT);
-        btn.setMaximumSize(new Dimension(250, 40));
-        btn.setFocusPainted(false);
-        btn.setForeground(Color.CYAN);
-        btn.setBackground(new Color(0, 0, 0, 0));
-        btn.setBorder(BorderFactory.createLineBorder(Color.CYAN));
-        btn.setFont(new Font("SansSerif", Font.PLAIN, 14));
-        return btn;
     }
 
     private void afficherListeUtilisateurs() {
@@ -75,66 +63,90 @@ public class UtilisateurUI {
         frame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
         frame.setSize(900, 550);
         frame.setLocationRelativeTo(null);
+        frame.setLayout(new BorderLayout());
 
         String[] columnNames = {"ID", "Nom d'utilisateur", "Email", "Nom", "Prénom"};
         DefaultTableModel tableModel = new DefaultTableModel(columnNames, 0);
         JTable table = new JTable(tableModel);
+        table.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
         JScrollPane scrollPane = new JScrollPane(table);
 
-        if (utilisateurs != null && utilisateurs.getUtilisateurs() != null) {
-            for (Utilisateur u : utilisateurs.getUtilisateurs()) {
-                tableModel.addRow(new Object[]{
-                        u.getIdUtilisateur(), u.getNomUtilisateur(), u.getEmail(), u.getNom(), u.getPrenom()
-                });
+        if (utilisateurs != null && utilisateurs.getUtilisateurs() != null && !utilisateurs.getUtilisateurs().isEmpty()) {
+            for (Utilisateur utilisateur : utilisateurs.getUtilisateurs()) {
+                Object[] row = {
+                        utilisateur.getIdUtilisateur(),
+                        utilisateur.getNomUtilisateur(),
+                        utilisateur.getEmail(),
+                        utilisateur.getNom(),
+                        utilisateur.getPrenom()
+                };
+                tableModel.addRow(row);
             }
         } else {
             tableModel.addRow(new Object[]{"", "Aucun utilisateur trouvé", "", "", ""});
         }
 
-        JButton modifierBtn = new JButton("Modifier");
-        JButton supprimerBtn = new JButton("Supprimer");
-
-        modifierBtn.addActionListener(e -> {
-            int row = table.getSelectedRow();
-            if (row == -1) {
-                JOptionPane.showMessageDialog(frame, "Sélectionnez un utilisateur.");
+        JButton modifierButton = createDefaultButton("Modifier Utilisateur");
+        modifierButton.addActionListener(e -> {
+            int selectedRow = table.getSelectedRow();
+            if (selectedRow == -1) {
+                JOptionPane.showMessageDialog(frame, "Veuillez sélectionner un utilisateur.");
                 return;
             }
-            Utilisateur u = new Utilisateur();
-            u.setIdUtilisateur((int) tableModel.getValueAt(row, 0));
-            u.setNomUtilisateur((String) tableModel.getValueAt(row, 1));
-            u.setEmail((String) tableModel.getValueAt(row, 2));
-            u.setNom((String) tableModel.getValueAt(row, 3));
-            u.setPrenom((String) tableModel.getValueAt(row, 4));
-            afficherFormulaireModification(u, tableModel, row);
+
+            int id = (int) tableModel.getValueAt(selectedRow, 0);
+            String nomUtilisateur = (String) tableModel.getValueAt(selectedRow, 1);
+            String email = (String) tableModel.getValueAt(selectedRow, 2);
+            String nom = (String) tableModel.getValueAt(selectedRow, 3);
+            String prenom = (String) tableModel.getValueAt(selectedRow, 4);
+
+            Utilisateur utilisateur = new Utilisateur();
+            utilisateur.setIdUtilisateur(id);
+            utilisateur.setNomUtilisateur(nomUtilisateur);
+            utilisateur.setEmail(email);
+            utilisateur.setNom(nom);
+            utilisateur.setPrenom(prenom);
+
+            afficherFormulaireModification(utilisateur, tableModel, selectedRow);
         });
 
-        supprimerBtn.addActionListener(e -> {
-            int row = table.getSelectedRow();
-            if (row == -1) {
-                JOptionPane.showMessageDialog(frame, "Sélectionnez un utilisateur.");
+        JButton supprimerButton = createDefaultButton("Supprimer Utilisateur");
+        supprimerButton.addActionListener(e -> {
+            int selectedRow = table.getSelectedRow();
+            if (selectedRow == -1) {
+                JOptionPane.showMessageDialog(frame, "Veuillez sélectionner un utilisateur à supprimer.");
                 return;
             }
-            int confirm = JOptionPane.showConfirmDialog(frame, "Supprimer cet utilisateur ?", "Confirmation", JOptionPane.YES_NO_OPTION);
+
+            int id = (int) tableModel.getValueAt(selectedRow, 0);
+            String nomUtilisateur = (String) tableModel.getValueAt(selectedRow, 1);
+
+            int confirm = JOptionPane.showConfirmDialog(frame,
+                    "Voulez-vous vraiment supprimer l'utilisateur " + nomUtilisateur + " ?",
+                    "Confirmation",
+                    JOptionPane.YES_NO_OPTION);
+
             if (confirm == JOptionPane.YES_OPTION) {
                 try {
-                    Utilisateur u = new Utilisateur();
-                    u.setIdUtilisateur((int) tableModel.getValueAt(row, 0));
-                    utilisateurService.deleteUtilisateur(u);
-                    tableModel.removeRow(row);
-                    JOptionPane.showMessageDialog(frame, "Utilisateur supprimé.");
+                    Utilisateur utilisateur = new Utilisateur();
+                    utilisateur.setIdUtilisateur(id);
+
+                    utilisateurService.deleteUtilisateur(utilisateur);
+                    JOptionPane.showMessageDialog(frame, "Utilisateur supprimé avec succès !");
+                    tableModel.removeRow(selectedRow);
                 } catch (Exception ex) {
-                    JOptionPane.showMessageDialog(frame, "Erreur : " + ex.getMessage());
+                    JOptionPane.showMessageDialog(frame, "Erreur lors de la suppression : " + ex.getMessage());
                 }
             }
         });
 
-        JPanel buttonPanel = new JPanel();
-        buttonPanel.add(modifierBtn);
-        buttonPanel.add(supprimerBtn);
+        JPanel panel = new JPanel();
+        panel.setLayout(new FlowLayout());
+        panel.add(modifierButton);
+        panel.add(supprimerButton);
 
         frame.add(scrollPane, BorderLayout.CENTER);
-        frame.add(buttonPanel, BorderLayout.SOUTH);
+        frame.add(panel, BorderLayout.SOUTH);
         frame.setVisible(true);
     }
 
@@ -143,25 +155,35 @@ public class UtilisateurUI {
         frame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
         frame.setSize(900, 550);
         frame.setLocationRelativeTo(null);
-        JPanel panel = new JPanel(new GridLayout(6, 2, 10, 10));
+        frame.setLayout(new BorderLayout());
 
+        JPanel panel = new JPanel();
+        panel.setLayout(new GridLayout(6, 2, 10, 10));
+
+        panel.add(new JLabel("Nom d'utilisateur :"));
         JTextField nomUtilisateurField = new JTextField();
+        panel.add(nomUtilisateurField);
+
+        panel.add(new JLabel("Email :"));
         JTextField emailField = new JTextField();
+        panel.add(emailField);
+
+        panel.add(new JLabel("Mot de passe :"));
         JTextField passwordField = new JTextField();
+        panel.add(passwordField);
+
+        panel.add(new JLabel("Nom :"));
         JTextField nomField = new JTextField();
+        panel.add(nomField);
+
+        panel.add(new JLabel("Prénom :"));
         JTextField prenomField = new JTextField();
+        panel.add(prenomField);
 
-        panel.add(new JLabel("Nom d'utilisateur :")); panel.add(nomUtilisateurField);
-        panel.add(new JLabel("Email :")); panel.add(emailField);
-        panel.add(new JLabel("Mot de passe :")); panel.add(passwordField);
-        panel.add(new JLabel("Nom :")); panel.add(nomField);
-        panel.add(new JLabel("Prénom :")); panel.add(prenomField);
+        JButton createButton = createDefaultButton("Créer");
+        panel.add(createButton);
 
-        JButton createBtn = new JButton("Créer");
-        panel.add(new JLabel()); // pour aligner
-        panel.add(createBtn);
-
-        createBtn.addActionListener(e -> {
+        createButton.addActionListener(e -> {
             String nomUtilisateur = nomUtilisateurField.getText().trim();
             String email = emailField.getText().trim();
             String password = passwordField.getText().trim();
@@ -169,7 +191,13 @@ public class UtilisateurUI {
             String prenom = prenomField.getText().trim();
 
             if (nomUtilisateur.isEmpty() || email.isEmpty() || password.isEmpty() || nom.isEmpty() || prenom.isEmpty()) {
-                JOptionPane.showMessageDialog(frame, "Tous les champs doivent être remplis.");
+                JOptionPane.showMessageDialog(frame, "Tous les champs doivent être remplis.", "Erreur", JOptionPane.ERROR_MESSAGE);
+            } else if (nomUtilisateur.contains(" ")) {
+                JOptionPane.showMessageDialog(frame, "Le nom d'utilisateur ne doit pas contenir d'espaces.", "Erreur", JOptionPane.ERROR_MESSAGE);
+            } else if (!email.matches("^[\\w.-]+@[\\w.-]+\\.[a-zA-Z]{2,}$")) {
+                JOptionPane.showMessageDialog(frame, "Format email invalide", "Erreur", JOptionPane.ERROR_MESSAGE);
+            } else if (!password.matches("^(?=.*[A-Z])(?=.*\\d).{8,}$")) {
+                JOptionPane.showMessageDialog(frame, "Format mot de passe incorrect", "Erreur", JOptionPane.ERROR_MESSAGE);
             } else {
                 Utilisateur utilisateur = new Utilisateur();
                 utilisateur.setNomUtilisateur(nomUtilisateur);
@@ -177,16 +205,17 @@ public class UtilisateurUI {
                 utilisateur.setPassword(password);
                 utilisateur.setNom(nom);
                 utilisateur.setPrenom(prenom);
+
                 try {
-                    String result = utilisateurService.insertUtilisateur(utilisateur);
-                    if ("Email déjà utilisé".equals(result)) {
-                        JOptionPane.showMessageDialog(frame, "Email déjà utilisé.");
+                    String response = utilisateurService.insertUtilisateur(utilisateur);
+                    if ("Email déjà utilisé".equals(response)) {
+                        JOptionPane.showMessageDialog(frame, "Cet email est déjà utilisé.", "Erreur", JOptionPane.ERROR_MESSAGE);
                     } else {
-                        JOptionPane.showMessageDialog(frame, "Utilisateur créé !");
+                        JOptionPane.showMessageDialog(frame, "Utilisateur créé avec succès !");
                         frame.dispose();
                     }
-                } catch (Exception ex) {
-                    JOptionPane.showMessageDialog(frame, "Erreur : " + ex.getMessage());
+                } catch (InterruptedException | IOException ex) {
+                    JOptionPane.showMessageDialog(frame, "Erreur lors de la création de l'utilisateur : " + ex.getMessage());
                 }
             }
         });
@@ -195,48 +224,103 @@ public class UtilisateurUI {
         frame.setVisible(true);
     }
 
-    private void afficherFormulaireModification(Utilisateur utilisateur, DefaultTableModel model, int row) {
-        JFrame frame = new JFrame("Modifier Utilisateur");
+    private void afficherFormulaireModification(Utilisateur utilisateur, DefaultTableModel tableModel, int selectedRow) {
+        JFrame frame = new JFrame("Modifier un Utilisateur");
         frame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
-        frame.setSize(600, 400);
+        frame.setSize(900, 550);
         frame.setLocationRelativeTo(null);
 
-        JPanel panel = new JPanel(new GridLayout(6, 2, 10, 10));
+        JPanel panel = new JPanel(new GridLayout(7, 2, 10, 10));
+
+        panel.add(new JLabel("ID Utilisateur :"));
+        JTextField idField = new JTextField(String.valueOf(utilisateur.getIdUtilisateur()));
+        idField.setEditable(false);
+        panel.add(idField);
+
+        panel.add(new JLabel("Nom d'utilisateur :"));
         JTextField nomUtilisateurField = new JTextField(utilisateur.getNomUtilisateur());
+        panel.add(nomUtilisateurField);
+
+        panel.add(new JLabel("Email :"));
         JTextField emailField = new JTextField(utilisateur.getEmail());
+        panel.add(emailField);
+
+        panel.add(new JLabel("Mot de passe (Laissez vide pour ne pas changer) :"));
         JTextField passwordField = new JTextField();
+        panel.add(passwordField);
+
+        panel.add(new JLabel("Nom :"));
         JTextField nomField = new JTextField(utilisateur.getNom());
+        panel.add(nomField);
+
+        panel.add(new JLabel("Prénom :"));
         JTextField prenomField = new JTextField(utilisateur.getPrenom());
+        panel.add(prenomField);
 
-        panel.add(new JLabel("Nom d'utilisateur :")); panel.add(nomUtilisateurField);
-        panel.add(new JLabel("Email :")); panel.add(emailField);
-        panel.add(new JLabel("Mot de passe (laisser vide pour ne pas modifier) :")); panel.add(passwordField);
-        panel.add(new JLabel("Nom :")); panel.add(nomField);
-        panel.add(new JLabel("Prénom :")); panel.add(prenomField);
+        JButton updateButton = createDefaultButton("Modifier");
+        panel.add(updateButton);
 
-        JButton updateBtn = new JButton("Enregistrer");
-        panel.add(new JLabel()); panel.add(updateBtn);
-
-        updateBtn.addActionListener(e -> {
-            utilisateur.setNomUtilisateur(nomUtilisateurField.getText());
-            utilisateur.setEmail(emailField.getText());
-            utilisateur.setNom(nomField.getText());
-            utilisateur.setPrenom(prenomField.getText());
-
-            if (!passwordField.getText().isEmpty()) {
-                utilisateur.setPassword(passwordField.getText());
-            }
-
+        updateButton.addActionListener(e -> {
             try {
+                String nomUtilisateur = nomUtilisateurField.getText().trim();
+                String email = emailField.getText().trim();
+                String password = passwordField.getText().trim();
+                String nom = nomField.getText().trim();
+                String prenom = prenomField.getText().trim();
+
+                if (nomUtilisateur.isEmpty() || email.isEmpty() || nom.isEmpty() || prenom.isEmpty()) {
+                    JOptionPane.showMessageDialog(frame, "Tous les champs obligatoires doivent être remplis.", "Erreur", JOptionPane.ERROR_MESSAGE);
+                    return;
+                }
+
+                if (nomUtilisateur.contains(" ")) {
+                    JOptionPane.showMessageDialog(frame, "Le nom d'utilisateur ne doit pas contenir d'espaces.", "Erreur", JOptionPane.ERROR_MESSAGE);
+                    return;
+                }
+
+                if (!email.matches("^[\\w.-]+@[\\w.-]+\\.[a-zA-Z]{2,}$")) {
+                    JOptionPane.showMessageDialog(frame, "Format email invalide.", "Erreur", JOptionPane.ERROR_MESSAGE);
+                    return;
+                }
+
+                if (!password.isEmpty() && !password.matches("^(?=.*[A-Z])(?=.*\\d).{8,}$")) {
+                    JOptionPane.showMessageDialog(frame, "Format du mot de passe incorrect. Il doit contenir au moins une majuscule, un chiffre et 8 caractères minimum.", "Erreur", JOptionPane.ERROR_MESSAGE);
+                    return;
+                }
+
+                if (utilisateurService.emailExiste(email, utilisateur.getIdUtilisateur())) {
+                    JOptionPane.showMessageDialog(frame, "Cet email est déjà utilisé.", "Erreur", JOptionPane.ERROR_MESSAGE);
+                    return;
+                }
+
+                if (utilisateurService.nomUtilisateurExiste(nomUtilisateur, utilisateur.getIdUtilisateur())) {
+                    JOptionPane.showMessageDialog(frame, "Ce nom d'utilisateur est déjà utilisé.", "Erreur", JOptionPane.ERROR_MESSAGE);
+                    return;
+                }
+
+
+                utilisateur.setNomUtilisateur(nomUtilisateur);
+                utilisateur.setEmail(email);
+                utilisateur.setNom(nom);
+                utilisateur.setPrenom(prenom);
+                if (!password.isEmpty()) {
+                    utilisateur.setPassword(password);
+                }
+
+
                 utilisateurService.updateUtilisateur(utilisateur);
-                JOptionPane.showMessageDialog(frame, "Utilisateur mis à jour !");
-                model.setValueAt(utilisateur.getNomUtilisateur(), row, 1);
-                model.setValueAt(utilisateur.getEmail(), row, 2);
-                model.setValueAt(utilisateur.getNom(), row, 3);
-                model.setValueAt(utilisateur.getPrenom(), row, 4);
+                JOptionPane.showMessageDialog(frame, "Utilisateur modifié avec succès !");
+
+
+                tableModel.setValueAt(nomUtilisateur, selectedRow, 1);
+                tableModel.setValueAt(email, selectedRow, 2);
+                tableModel.setValueAt(nom, selectedRow, 3);
+                tableModel.setValueAt(prenom, selectedRow, 4);
+
                 frame.dispose();
             } catch (Exception ex) {
-                JOptionPane.showMessageDialog(frame, "Erreur : " + ex.getMessage());
+                ex.printStackTrace();
+                JOptionPane.showMessageDialog(frame, "Erreur lors de la modification : " + ex.getMessage(), "Erreur", JOptionPane.ERROR_MESSAGE);
             }
         });
 
@@ -244,7 +328,26 @@ public class UtilisateurUI {
         frame.setVisible(true);
     }
 
-    // Reprise du panel dégradé (identique à AccueilUI)
+
+    // Bouton style
+    private static JButton createStyledButton(String text) {
+        JButton btn = new JButton(text);
+        btn.setAlignmentX(Component.CENTER_ALIGNMENT);
+        btn.setMaximumSize(new Dimension(200, 40));
+        btn.setFocusPainted(false);
+        btn.setForeground(Color.CYAN);
+        btn.setBackground(new Color(0, 0, 0, 0)); // fond transparent
+        btn.setBorder(BorderFactory.createLineBorder(Color.CYAN));
+        btn.setFont(new Font("SansSerif", Font.PLAIN, 14));
+        return btn;
+    }
+
+    // bouton normal
+    private static JButton createDefaultButton(String text) {
+        return new JButton(text); // Bouton classique sans style
+    }
+
+    // panel degrade
     static class GradientPanel extends JPanel {
         @Override
         protected void paintComponent(Graphics g) {
