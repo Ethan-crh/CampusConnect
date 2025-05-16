@@ -288,10 +288,12 @@ public class UtilisateurUI {
                     return;
                 }
 
-                if (utilisateurService.emailExiste(email, utilisateur.getIdUtilisateur())) {
+
+                if (!email.equals(utilisateur.getEmail()) && utilisateurService.emailExiste(email, utilisateur.getIdUtilisateur())) {
                     JOptionPane.showMessageDialog(frame, "Cet email est déjà utilisé.", "Erreur", JOptionPane.ERROR_MESSAGE);
                     return;
                 }
+
 
                 if (utilisateurService.nomUtilisateurExiste(nomUtilisateur, utilisateur.getIdUtilisateur())) {
                     JOptionPane.showMessageDialog(frame, "Ce nom d'utilisateur est déjà utilisé.", "Erreur", JOptionPane.ERROR_MESSAGE);
