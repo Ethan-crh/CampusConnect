@@ -39,7 +39,7 @@ public class ReservationUI {
         gradientPanel.setLayout(new BoxLayout(gradientPanel, BoxLayout.Y_AXIS));
         gradientPanel.setBorder(BorderFactory.createEmptyBorder(100, 300, 100, 300));
 
-        JLabel title = new JLabel("Gestion des Utilisateurs");
+        JLabel title = new JLabel("Gestion Réservations");
         title.setFont(new Font("SansSerif", Font.BOLD, 24));
         title.setForeground(Color.LIGHT_GRAY);
         title.setAlignmentX(Component.CENTER_ALIGNMENT);
@@ -47,8 +47,8 @@ public class ReservationUI {
         gradientPanel.add(Box.createVerticalStrut(30));
 
         // Boutons pour afficher la liste des réservations et créer une nouvelle réservation
-        JButton afficherButton = createStyledButton("Liste des Réservations");
-        JButton creerButton = createStyledButton("Créer Nouvelle Réservation");
+        JButton afficherButton = createStyledButton("Liste Réservations");
+        JButton creerButton = createStyledButton("Créer nouvelle Réservation");
 
         afficherButton.addActionListener(e -> afficherListeReservations());
         creerButton.addActionListener(e -> afficherFormulaireCreation());
