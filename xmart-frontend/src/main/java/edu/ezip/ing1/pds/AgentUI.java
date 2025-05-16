@@ -25,7 +25,7 @@ public class AgentUI {
         // Créer la fenêtre principale avec les boutons nécessaires
         JFrame frame = new JFrame("Gestion des Capteurs.");
         frame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
-        frame.setSize(800, 600);
+        frame.setSize(900, 550);
         frame.setLocationRelativeTo(null);
 
         // Appliquer un Layout pour positionner les boutons
@@ -35,8 +35,8 @@ public class AgentUI {
         gbc.insets = new Insets(10, 10, 10, 10); // Espacement entre les composants
 
         // Boutons pour afficher la liste des capteurs et ajouter un nouveau capteur
-        JButton afficherButton = new JButton("Liste des Capteurs");
-        JButton creerButton = new JButton("Créer Nouveau Capteur");
+        JButton afficherButton = createStyledButton("Liste des Capteurs");
+        JButton creerButton = createStyledButton("Créer Nouveau Capteur");
         afficherButton.setPreferredSize(new Dimension(200, 50));
         creerButton.setPreferredSize(new Dimension(200, 50));
 
@@ -79,7 +79,7 @@ public class AgentUI {
 
         JFrame frame = new JFrame("Liste des Capteurs");
         frame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
-        frame.setSize(800, 400);
+        frame.setSize(900, 550);
         frame.setLocationRelativeTo(null);
         frame.setLayout(new BorderLayout());
 
@@ -176,7 +176,7 @@ public class AgentUI {
     private void afficherFormulaireCreation() {
         JFrame frame = new JFrame("Créer un Capteur");
         frame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
-        frame.setSize(450, 350);
+        frame.setSize(900, 550);
         frame.setLocationRelativeTo(null);
         frame.setLayout(new BorderLayout());
 
@@ -288,7 +288,7 @@ public class AgentUI {
     private void afficherFormulaireModification(Capteur capteur, DefaultTableModel tableModel, int selectedRow) {
         JFrame frame = new JFrame("Modifier un Capteur");
         frame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
-        frame.setSize(400, 300);
+        frame.setSize(900, 550);
         frame.setLocationRelativeTo(null);
 
         JPanel panel = new JPanel(new GridLayout(5, 2, 10, 10));
@@ -359,6 +359,10 @@ public class AgentUI {
         btn.setBorder(BorderFactory.createLineBorder(Color.CYAN));
         btn.setFont(new Font("SansSerif", Font.PLAIN, 14));
         return btn;
+    }
+    // bouton normal
+    private static JButton createDefaultButton(String text) {
+        return new JButton(text); // Bouton classique sans style
     }
 
     static class GradientPanel extends JPanel {

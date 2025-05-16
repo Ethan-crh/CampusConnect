@@ -25,7 +25,7 @@ public class CapteurUI {
         // Créer la fenêtre principale avec les boutons nécessaires
         JFrame frame = new JFrame("Gestion des Capteurs.");
         frame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
-        frame.setSize(800, 600);
+        frame.setSize(900, 550);
         frame.setLocationRelativeTo(null);
 
         // Appliquer un Layout pour positionner les boutons
@@ -35,8 +35,8 @@ public class CapteurUI {
         gbc.insets = new Insets(10, 10, 10, 10); // Espacement entre les composants
 
         // Boutons pour afficher la liste des capteurs et ajouter un nouveau capteur
-        JButton afficherButton = new JButton("Liste des Capteurs");
-        JButton creerButton = new JButton("Créer Nouveau Capteur");
+        JButton afficherButton = createStyledButton("Liste des Capteurs");
+        JButton creerButton = createStyledButton("Créer Nouveau Capteur");
         afficherButton.setPreferredSize(new Dimension(200, 50));
         creerButton.setPreferredSize(new Dimension(200, 50));
 
@@ -79,7 +79,7 @@ public class CapteurUI {
 
         JFrame frame = new JFrame("Liste des Capteurs");
         frame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
-        frame.setSize(800, 400);
+        frame.setSize(900, 550);
         frame.setLocationRelativeTo(null);
         frame.setLayout(new BorderLayout());
 
@@ -176,7 +176,7 @@ public class CapteurUI {
     private void afficherFormulaireCreation() {
         JFrame frame = new JFrame("Créer un Capteur");
         frame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
-        frame.setSize(450, 350);
+        frame.setSize(900, 550);
         frame.setLocationRelativeTo(null);
         frame.setLayout(new BorderLayout());
 
@@ -288,7 +288,7 @@ public class CapteurUI {
     private void afficherFormulaireModification(Capteur capteur, DefaultTableModel tableModel, int selectedRow) {
         JFrame frame = new JFrame("Modifier un Capteur");
         frame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
-        frame.setSize(400, 300);
+        frame.setSize(900, 550);
         frame.setLocationRelativeTo(null);
 
         JPanel panel = new JPanel(new GridLayout(5, 2, 10, 10));
@@ -347,4 +347,36 @@ public class CapteurUI {
 
         frame.add(panel);
         frame.setVisible(true);
-    }}
+    }
+    // Bouton style
+    private static JButton createStyledButton(String text) {
+        JButton btn = new JButton(text);
+        btn.setAlignmentX(Component.CENTER_ALIGNMENT);
+        btn.setMaximumSize(new Dimension(200, 40));
+        btn.setFocusPainted(false);
+        btn.setForeground(Color.CYAN);
+        btn.setBackground(new Color(0, 0, 0, 0)); // fond transparent
+        btn.setBorder(BorderFactory.createLineBorder(Color.CYAN));
+        btn.setFont(new Font("SansSerif", Font.PLAIN, 14));
+        return btn;
+    }
+
+    // bouton normal
+    private static JButton createDefaultButton(String text) {
+        return new JButton(text); // Bouton classique sans style
+    }
+
+    // panel degrade
+    static class GradientPanel extends JPanel {
+        @Override
+        protected void paintComponent(Graphics g) {
+            super.paintComponent(g);
+            Graphics2D g2d = (Graphics2D) g;
+            Color c1 = new Color(10, 10, 30);
+            Color c2 = new Color(30, 50, 80);
+            GradientPaint gp = new GradientPaint(0, 0, c1, getWidth(), getHeight(), c2);
+            g2d.setPaint(gp);
+            g2d.fillRect(0, 0, getWidth(), getHeight());
+        }
+    }
+}
